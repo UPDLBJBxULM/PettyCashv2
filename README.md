@@ -122,4 +122,4 @@ Bagian **5. Troubleshooting** pada dokumentasi sebelumnya telah menyediakan daft
     *   **Sesuaikan Prompt Gemini API (Eksperimen):** Jika Gemini API sering gagal mengekstrak nilai total dengan benar, Anda bisa mencoba **memodifikasi prompt teks** di `extract_total_from_receipt_gemini` function di `app.py`. Coba prompt yang lebih spesifik, lebih sederhana, atau dengan instruksi yang berbeda. Eksperimen dengan prompt yang berbeda mungkin bisa meningkatkan akurasi ekstraksi.
     *   **Input Manual:** Jika Gemini API terus gagal mengekstrak nilai total secara akurat untuk jenis struk tertentu, pertimbangkan untuk memberikan opsi bagi pengguna untuk **memasukkan nilai total secara manual** sebagai fallback.
 
-    **Made with ❤️ by Ilkom 21**
+    **Made with ❤️ by ULM-Ilkom 21**
