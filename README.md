@@ -121,3 +121,5 @@ Bagian **5. Troubleshooting** pada dokumentasi sebelumnya telah menyediakan daft
     *   **Periksa `response.text` di Log:** Aktifkan logging raw response dan `response.text` dari Gemini API di `app.py` (seperti yang telah kita bahas sebelumnya). Periksa output log untuk melihat apa yang sebenarnya dikembalikan oleh Gemini API. Apakah API mengembalikan teks yang benar? Apakah format teks sesuai dengan yang diharapkan?
     *   **Sesuaikan Prompt Gemini API (Eksperimen):** Jika Gemini API sering gagal mengekstrak nilai total dengan benar, Anda bisa mencoba **memodifikasi prompt teks** di `extract_total_from_receipt_gemini` function di `app.py`. Coba prompt yang lebih spesifik, lebih sederhana, atau dengan instruksi yang berbeda. Eksperimen dengan prompt yang berbeda mungkin bisa meningkatkan akurasi ekstraksi.
     *   **Input Manual:** Jika Gemini API terus gagal mengekstrak nilai total secara akurat untuk jenis struk tertentu, pertimbangkan untuk memberikan opsi bagi pengguna untuk **memasukkan nilai total secara manual** sebagai fallback.
+
+    <center>**Made with ❤️ by Ilkom 21**</center>
