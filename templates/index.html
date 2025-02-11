@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Pindai Nota</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com" defer></script>
+  <!-- Link ke file CSS kustom -->
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <!-- Choice.js CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+</head>
+
+<body class="bg-gray-100">
+  <!-- Splash Screen -->
+  <div id="splashScreen" class="splash-screen">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Petty Easy Logo" class="splash-logo" />
+  </div>
+
+  <!-- Kontainer utama aplikasi -->
+  <div class="camera-container">
+    <!-- Pratinjau gambar nota -->
+    <img id="preview" alt="Pratinjau Nota" class="hidden w-full h-full object-contain" />
+    <!-- Video kamera untuk pemindaian nota -->
+    <video id="video" class="camera-view" autoplay playsinline aria-label="Pratinjau Kamera"></video>
+
+    <main class="controls" style="position: fixed; z-index: 100;">
+      <!-- Langkah 1: Unggah atau Pindai Nota -->
+      <section id="step1" class="sectionku step active flex flex-col" aria-labelledby="step1Title">
+        <h2 id="step1Title" class="sr-only">
+          Langkah 1: Unggah atau Pindai Nota
+        </h2>
+
+        <!-- Bagian tombol untuk pindai dan unggah nota -->
+        <div class="button-section items-center justify-center">
+          <div class="flex mb-4 w-full items-center justify-center">
+            <!-- Tombol Rincian Nota -->
+            <button class="side-btn mr-6 grid" id="nextToStep2" disabled>
+              <div class="grid place-items-center">
+                <img src="/static/images/list.png" class="img-icon-size" alt="Rincian Nota">
+                <span class="sidebtn-text">Rincian Nota</span>
+              </div>
+            </button>
+
+            <!-- Tombol Scan -->
+            <button class="camera-btn" id="scanButton">
+              <svg class="camera-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white"
+                stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+
+            <!-- Unggah Nota -->
+            <label for="uploadInput" class="side-btn ml-6" aria-label="Unggah Nota" style="cursor: pointer;">
+              <div class="grid place-items-center">
+                <img src="/static/images/image-.png" alt="Unggah Nota" class="img-icon-size">
+                <span class="sidebtn-text">Unggah Nota</span>
+              </div>
+            </label>
+
+            <!-- Input file yang tersembunyi -->
+            <input id="uploadInput" type="file" accept="image/*" class="hidden" />
+          </div>
+        </div>
+
+        <!-- Tombol untuk melanjutkan ke langkah berikutnya (jika ada) -->
+        <div class="flex space-x-2 w-full">
+          <!-- Tambahkan tombol lain jika diperlukan -->
+        </div>
+      </section>
+
+      <!-- Input tersembunyi untuk tautan nota dan bukti -->
+      <input type="hidden" id="receiptLinkInput" name="receipt_link" />
+      <input type="hidden" id="evidenceLinksInput" name="evidence_links" />
+
+      <!-- Placeholder jika tidak ada gambar yang dipilih -->
+      <div id="placeholder" class="text-gray-400 flex flex-col items-center">
+        <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+          aria-hidden="true">
+          <path d="M12 11.25v-4.5m0 0L9.75 8.25M12 6.75l2.25 1.5m-6 4.5h9a1.5 1.5 0 010 3h-9a1.5 1.5 0 010-3z"></path>
+        </svg>
+        <p class="text-sm">Tidak ada gambar yang dipilih</p>
+      </div>
+    </main>
+
+    <!-- Spinner loading saat memproses -->
+    <div id="loadingSpinner" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 hidden"
+      aria-live="polite" aria-busy="true">
+      <div class="spinner" role="status" aria-label="Memuat"></div>
+    </div>
+  </div>
+
+  <!-- Modal dan Overlay untuk berbagai dialog -->
+
+  <!-- Modal Formulir -->
+  <div id="formModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden" role="dialog"
+    aria-modal="true" aria-labelledby="formModalTitle">
+    <div class="bg-white rounded-lg p-6 w-full max-w-lg mx-auto">
+      <h2 id="formModalTitle" class="sr-only">Modal Formulir</h2>
+
+      <!-- Bagian seleksi mata uang dan input jumlah -->
+      <div class="flex justify-between space-x-4 mb-4">
+        <div class="w-1/3">
+          <label for="currencySelect" class="block text-gray-700 mb-1 text-left">
+            Mata Uang
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <select id="currencySelect"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-required="true" aria-label="Mata Uang">
+            <option value="IDR" selected>IDR</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+        <div class="w-2/3 text-right">
+          <label for="amountInput" class="block text-gray-700 mb-1 text-left">
+            Jumlah
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="flex">
+            <!-- Simbol mata uang -->
+            <span
+              class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm"
+              id="currencySymbolContainer">
+              <span id="currencySymbol">Rp</span>
+            </span>
+            <!-- Input untuk jumlah transaksi -->
+            <input id="amountInput" type="number" step="0.01"
+              class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Jumlah" required />
+          </div>
+          <!-- Pesan error jika jumlah tidak valid -->
+          <div id="amountError" class="text-red-500 text-sm hidden" role="alert">
+            Silakan masukkan jumlah yang valid.
+          </div>
+        </div>
+      </div>
+
+      <!-- Bagian unggah file bukti transaksi -->
+      <div class="mb-4">
+        <label for="evidenceFilesInput" class="block text-gray-700 mb-1">
+          Unggah File Bukti (Opsional)
+        </label>
+        <input id="evidenceFilesInput" type="file" accept="image/*" multiple
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-label="Unggah File Bukti" />
+      </div>
+
+      <!-- Bagian pemilihan akun SKKO dengan Choice.js -->
+      <div class="mb-4">
+        <label for="accountIdSelect" class="block text-gray-700 mb-1">
+          Akun SKKO <span class="text-red-500" aria-hidden="true">*</span>
+          <span class="tooltip" data-tooltip="Pilih Akun SKKO yang sesuai dari daftar." tabindex="0">ⓘ</span>
+        </label>
+        <select id="accountIdSelect" name="accountSKKO"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-required="true" aria-label="Akun SKKO">
+          <option value="" selected disabled>Pilih Akun SKKO</option>
+          <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+        </select>
+        <!-- Pesan error jika akun SKKO belum dipilih -->
+        <div id="accountError" class="text-red-500 text-sm hidden" role="alert">
+          Silakan pilih Akun SKKO yang valid.
+        </div>
+      </div>
+
+      <!-- Bagian pemilihan ID Rencana dengan Choice.js -->
+      <div class="mb-4">
+        <label for="rencanaIdSelect" class="block text-gray-700 mb-1">
+          ID Rencana <span class="text-red-500" aria-hidden="true">*</span>
+          <span class="tooltip" data-tooltip="Pilih ID Rencana yang sesuai dengan Request Form." tabindex="0">ⓘ</span>
+        </label>
+        <select id="rencanaIdSelect"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-required="true" aria-label="ID Rencana">
+          <option value="" selected disabled>Pilih ID Rencana</option>
+          <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+        </select>
+        <!-- Pesan error jika ID Rencana belum dipilih -->
+        <div id="rencanaError" class="text-red-500 text-sm hidden" role="alert">
+          Silakan pilih ID Rencana yang valid.
+        </div>
+      </div>
+
+      <!-- Bagian Pemilihan Judul Laporan dengan Datalist -->
+      <div class="mb-4">
+        <label for="judulLaporanInput" class="block text-gray-700 mb-1">
+          Judul Laporan <span class="text-red-500" aria-hidden="true">*</span>
+          <span class="tooltip" data-tooltip="Masukkan Judul Laporan yang sesuai, ini akan menjadi Judul Laporan A/R." tabindex="0">ⓘ</span>
+        </label>
+        <input list="judulLaporanOptions" id="judulLaporanInput" name="judulLaporanInput" autocomplete="off"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-required="true" aria-label="Judul Laporan" />
+        <datalist id="judulLaporanOptions">
+          <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+        </datalist>
+        <!-- Pesan error jika judul laporan belum dipilih -->
+        <div id="judulError" class="text-red-500 text-sm hidden" role="alert">
+          Silakan pilih Judul Laporan yang valid.
+        </div>
+      </div>
+
+      <!-- Bagian Pemilihan Uraian dengan Datalist -->
+      <div class="mb-4">
+        <label for="uraianInput" class="block text-gray-700 mb-1">
+          Uraian <span class="text-red-500" aria-hidden="true">*</span>
+          <span class="tooltip" data-tooltip="Masukkan Uraian yang sesuai dengan Judul Laporan" tabindex="0">ⓘ</span>
+        </label>
+        <input list="uraianOptions" id="uraianInput" name="uraianInput" autocomplete="off"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-required="true" aria-label="Uraian" />
+        <datalist id="uraianOptions">
+          <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+        </datalist>
+        <!-- Pesan error jika uraian belum dipilih -->
+        <div id="uraianError" class="text-red-500 text-sm hidden" role="alert">
+          Silakan pilih Uraian yang valid.
+        </div>
+      </div>
+
+
+      <!-- Bagian tombol aksi pada modal formulir -->
+      <div class="flex justify-between space-x-4 mt-6">
+        <!-- Tombol untuk membatalkan dan menutup modal formulir -->
+        <button id="closeModalButton"
+          class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          aria-label="Batal">
+          Batal
+        </button>
+        <!-- Tombol untuk melanjutkan ke langkah berikutnya -->
+        <button id="nextToStep3"
+          class="flex-1 bg-[#10ace4] text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Lanjut ke Langkah 3">
+          Selanjutnya
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ringkasan -->
+  <div id="summaryModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden"
+    role="dialog" aria-modal="true" aria-labelledby="summaryModalTitle">
+    <div class="bg-white rounded-lg p-6 w-full max-w-lg mx-auto">
+      <h2 id="summaryModalTitle" class="text-xl font-semibold mb-4">
+        Tinjau Ulang
+      </h2>
+      <p class="text-gray-700 mb-4">
+        Pastikan informasi sesuai dan nilai pada nota benar!
+      </p>
+      <div id="reviewInfo" class="mb-4"></div>
+      <div class="flex justify-between space-x-4 mt-6">
+        <!-- Tombol untuk kembali ke langkah sebelumnya -->
+        <button id="backToStep2"
+          class="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          aria-label="Kembali ke Langkah 2">
+          Kembali
+        </button>
+        <!-- Tombol untuk mengirim data -->
+        <button id="submitButton"
+          class="flex-1 bg-[#10ace4] text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-50"
+          disabled aria-label="Kirim">
+          Kirim
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal untuk Detail Rencana -->
+  <div id="rencanaModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden"
+    role="dialog" aria-modal="true" aria-labelledby="rencanaModalTitle">
+    <div class="bg-white rounded-lg p-6 w-full max-w-lg mx-auto">
+      <h2 id="rencanaModalTitle" class="text-xl font-semibold mb-4">
+        Detail Rencana
+      </h2>
+      <div id="rencanaDetails" class="text-gray-800 mb-4"></div>
+      <div class="flex justify-between space-x-4 mt-6">
+        <!-- Tombol untuk membatalkan pemilihan rencana -->
+        <button id="rencanaNoButton"
+          class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          aria-label="Tidak">
+          TIDAK
+        </button>
+        <!-- Tombol untuk menyetujui pemilihan rencana -->
+        <button id="rencanaYesButton"
+          class="bg-[#10ace4] text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Ya">
+          YA
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Pemrosesan -->
+  <div id="processingModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden"
+    role="dialog" aria-modal="true" aria-labelledby="processingModalTitle">
+    <div class="bg-white rounded-lg p-6 text-center">
+      <h2 id="processingModalTitle" class="sr-only">Pemrosesan</h2>
+      <p class="text-gray-800 mb-4">Sedang diproses, harap tunggu...</p>
+      <!-- Spinner: Tambahkan CSS spinner atau gunakan SVG -->
+      <div class="spinner" role="status" aria-label="Memproses"></div>
+    </div>
+  </div>
+
+  <!-- Modal untuk pesan umum -->
+  <div id="modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden" role="dialog"
+    aria-modal="true" aria-labelledby="modalMessage">
+    <div class="bg-white rounded-lg p-6 text-center w-full max-w-md mx-auto">
+      <p id="modalMessage" class="text-gray-800 mb-4"></p>
+      <button id="modalClose"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        aria-label="Tutup Modal">
+        Tutup
+      </button>
+    </div>
+  </div>
+  <!-- Choice.js JS -->
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js" defer></script>
+  <!-- Script JavaScript -->
+  <script src="/static/js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,429 @@
+/* General body styling */
+body {
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: black;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Main container styling */
+.container {
+    width: 100%;
+    max-width: 500px;
+    min-height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Spinner styling */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #4f46e5;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 1s linear infinite;
+    margin: auto;
+}
+
+/* Spinner animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Hide scrollbar for elements with .no-scrollbar class */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* Hide all steps by default */
+.step {
+    display: none;
+}
+
+/* Show active step */
+.step.active {
+    display: block;
+}
+
+/* Camera container styling */
+.camera-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #262626;
+}
+
+.camera-view {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Camera button styling */
+.camera-btn {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Side button styling */
+.side-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Controls styling */
+.controls {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px;
+    z-index: 100;
+}
+
+/* Custom button styling */
+.custom-button {
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    align-content: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+/* Splash screen styling */
+.splash-screen {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 100vh;
+    background-color: #10ace4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.splash-logo {
+    width: 150px;
+    height: auto;
+}
+
+.splash-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+/* Image icon size styling */
+.img-icon-size {
+    width: 45px;
+    height: 45px;
+}
+
+/* Side button text styling */
+.sidebtn-text {
+    font-size: 8px;
+    color: white;
+}
+
+/* Media query for screens smaller than 420px */
+@media (max-width: 420px) {
+    .camera-btn {
+        width: 80px;
+        height: 80px;
+    }
+
+    .sidebtn-text {
+        font-size: 6px;
+        color: white;
+    }
+
+    .side-btn {
+        width: 60px;
+        height: 60px;
+    }
+
+    .sectionku {
+        width: 50px;
+    }
+
+    .img-icon-size {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* Section width styling */
+.sectionku {
+    width: 500px;
+}
+
+/* Suggestions container styling */
+#judulSuggestions,
+#uraianSuggestions {
+    position: absolute;
+    width: calc(100% - 12px);
+    /* Mengurangi lebar dengan padding */
+    background-color: #eeeeee;
+    /* border: 1px solid #ccc; */
+    border-radius: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    margin-top: -165px;
+    /* margin-bottom: 85px; */
+    z-index: 1000;
+    left: 6px;
+    /* Menambah offset kiri */
+    right: 6px;
+    /* Menambah offset kanan */
+}
+
+/* Suggestions list styling */
+.suggestions-list {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    /* Prevent wrapping */
+    margin: 0;
+    gap: 10px;
+    /* Remove default margin */
+}
+
+.suggestions-list li {
+    flex: 0 0 30%;
+    padding: 20;
+    box-sizing: border-box;
+    margin: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .suggestions-list li {
+        flex: 0 0 45%;
+    }
+}
+
+@media (max-width: 480px) {
+    .suggestions-list li {
+        flex: 0 0 100%;
+    }
+}
+
+.suggestions-list li:hover {
+    background-color: #e0e0e0;
+}
+
+/* Ensure the modal and suggestions do not overlap */
+.modal-content {
+    position: relative;
+    z-index: 1001;
+    width: 80%;
+    max-width: 600px;
+    /* Ensure modal is above suggestions */
+}
+
+/* Suggestions text styling */
+#judulSuggestions p,
+#uraianSuggestions p {
+    margin: 5px;
+}
+
+#judulSuggestions ul,
+#uraianSuggestions ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#judulSuggestions li,
+#uraianSuggestions li {
+    padding: 5px;
+    cursor: pointer;
+}
+
+#judulSuggestions li:hover,
+#uraianSuggestions li:hover {
+    background-color: #e0e0e0;
+}
+
+.mb-4 {
+    position: relative;
+}
+
+/* style.css */
+
+/* Spinner styling */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #10ace4;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Hidden class to hide elements */
+.hidden {
+    display: none;
+}
+
+/* Saran Suggestions Styling */
+#judulSuggestions,
+#uraianSuggestions {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#judulSuggestions ul,
+#uraianSuggestions ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#judulSuggestions li,
+#uraianSuggestions li {
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+#judulSuggestions li:hover,
+#uraianSuggestions li:hover {
+    background-color: #f0f0f0;
+}
+
+/* Tambahkan di /static/css/style.css */
+
+/* Sesuaikan lebar input */
+input[list] {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+}
+
+input[list]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+/* Styling untuk datalist */
+datalist option {
+    background-color: white;
+    padding: 8px;
+    cursor: pointer;
+}
+
+/* Menambahkan hover effect pada opsi datalist (bisa tidak didukung oleh semua browser) */
+datalist option:hover {
+    background-color: #f0f0f0;
+}
+
+/* Tambahkan ini ke /static/css/style.css */
+
+/* Posisi relatif untuk parent tooltip */
+.tooltip {
+    position: relative;
+    cursor: pointer; /* Mengubah cursor menjadi pointer saat hover */
+}
+
+/* Tooltip teks */
+.tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%; /* Menempatkan tooltip di atas ikon */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+/* Arrow bawah tooltip */
+.tooltip::before {
+    content: "";
+    position: absolute;
+    bottom: 115%; /* Sesuaikan dengan jarak antara tooltip dan ikon */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.75) transparent transparent transparent;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+/* Tampilkan tooltip saat hover */
+.tooltip:hover::after,
+.tooltip:hover::before {
+    opacity: 1;
+}
+
+/* (Opsional) Tooltip muncul saat fokus (untuk aksesibilitas) */
+.tooltip:focus::after,
+.tooltip:focus::before {
+    opacity: 1;
+}

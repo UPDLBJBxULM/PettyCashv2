@@ -1,0 +1,30 @@
+# Python bytecode and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+rs_env/
+pyvenv.cfg
+venv/
+env/
+*/site-packages/
+
+# Log files
+*.log
+app.log
+
+# Temporary files and directories
+tmp/
+*.tmp
+*.swp
+*.swo
+*~
+.cache/
+
+# Environment configuration files
+.env
+
+# Credentials or sensitive data
+credentials/service_account_key.json
