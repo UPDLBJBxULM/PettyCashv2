@@ -102,6 +102,7 @@
       <h2 id="formModalTitle" class="sr-only">Modal Formulir</h2>
 
       <!-- Bagian seleksi mata uang dan input jumlah -->
+      <!-- Mata Uang -->
       <div class="flex justify-between space-x-4 mb-4">
         <div class="w-1/3">
           <label for="currencySelect" class="block text-gray-700 mb-1 text-left">
@@ -115,6 +116,7 @@
             <option value="USD">USD</option>
           </select>
         </div>
+        <!-- Jumlah -->
         <div class="w-2/3 text-right">
           <label for="amountInput" class="block text-gray-700 mb-1 text-left">
             Jumlah
@@ -167,29 +169,46 @@
         </div>
       </div>
 
-      <!-- Bagian pemilihan ID Rencana dengan Choice.js -->
-      <div class="mb-4">
-        <label for="rencanaIdSelect" class="block text-gray-700 mb-1">
-          ID Rencana <span class="text-red-500" aria-hidden="true">*</span>
-          <span class="tooltip" data-tooltip="Pilih ID Rencana yang sesuai dengan Request Form." tabindex="0">ⓘ</span>
-        </label>
-        <select id="rencanaIdSelect"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          aria-required="true" aria-label="ID Rencana">
-          <option value="" selected disabled>Pilih ID Rencana</option>
-          <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
-        </select>
-        <!-- Pesan error jika ID Rencana belum dipilih -->
-        <div id="rencanaError" class="text-red-500 text-sm hidden" role="alert">
-          Silakan pilih ID Rencana yang valid.
+      <!-- Container for ID Rencana and Cost Center -->
+      <div class="flex justify-between space-x-4 mb-1">
+        <!-- Bagian pemilihan ID Rencana dengan Choice.js -->
+        <div class="w-1/2">
+          <label for="rencanaIdSelect" class="block text-gray-700 mb-1">
+            ID Rencana <span class="text-red-500" aria-hidden="true">*</span>
+            <span class="tooltip" data-tooltip="Pilih ID Rencana yang sesuai dengan Request Form." tabindex="0">ⓘ</span>
+          </label>
+          <select id="rencanaIdSelect" name="rencanaId"
+            class="choices-select w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-required="true" aria-label="ID Rencana">
+            <option value="" selected disabled>Pilih ID Rencana</option>
+          </select>
+          <div id="rencanaError" class="text-red-500 text-sm hidden" role="alert">
+            Silakan pilih ID Rencana yang valid.
+          </div>
+        </div>
+
+        <!-- Cost Center -->
+        <div class="w-1/2">
+          <label for="costCenterSelect" class="block text-gray-700 mb-1">
+            Cost Center <span class="text-red-500" aria-hidden="true">*</span>
+            <span class="tooltip" data-tooltip="Pilih Cost Center yang sesuai." tabindex="0">ⓘ</span>
+          </label>
+          <select id="costCenterSelect" name="costCenter"
+            class="choices-select w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-required="true" aria-label="Cost Center">
+            <option value="" selected disabled>Pilih Cost Center</option>
+          </select>
+          <div id="costCenterError" class="text-red-500 text-sm hidden" role="alert">
+            Silakan pilih Cost Center yang valid.
+          </div>
         </div>
       </div>
-
       <!-- Bagian Pemilihan Judul Laporan dengan Datalist -->
-      <div class="mb-4">
+      <div class="mb-4 mt-0">
         <label for="judulLaporanInput" class="block text-gray-700 mb-1">
           Judul Laporan <span class="text-red-500" aria-hidden="true">*</span>
-          <span class="tooltip" data-tooltip="Masukkan Judul Laporan yang sesuai, ini akan menjadi Judul Laporan A/R." tabindex="0">ⓘ</span>
+          <span class="tooltip" data-tooltip="Masukkan Judul Laporan yang sesuai, ini akan menjadi Judul Laporan A/R."
+            tabindex="0">ⓘ</span>
         </label>
         <input list="judulLaporanOptions" id="judulLaporanInput" name="judulLaporanInput" autocomplete="off"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"

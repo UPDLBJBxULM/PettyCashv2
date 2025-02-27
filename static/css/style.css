@@ -379,14 +379,16 @@ datalist option:hover {
 /* Posisi relatif untuk parent tooltip */
 .tooltip {
     position: relative;
-    cursor: pointer; /* Mengubah cursor menjadi pointer saat hover */
+    cursor: pointer;
+    /* Mengubah cursor menjadi pointer saat hover */
 }
 
 /* Tooltip teks */
 .tooltip::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 125%; /* Menempatkan tooltip di atas ikon */
+    bottom: 125%;
+    /* Menempatkan tooltip di atas ikon */
     left: 50%;
     transform: translateX(-50%);
     background-color: rgba(0, 0, 0, 0.75);
@@ -405,7 +407,8 @@ datalist option:hover {
 .tooltip::before {
     content: "";
     position: absolute;
-    bottom: 115%; /* Sesuaikan dengan jarak antara tooltip dan ikon */
+    bottom: 115%;
+    /* Sesuaikan dengan jarak antara tooltip dan ikon */
     left: 50%;
     transform: translateX(-50%);
     border-width: 6px;

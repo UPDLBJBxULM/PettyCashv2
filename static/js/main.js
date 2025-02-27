@@ -119,12 +119,13 @@
         backToStep2 = document.getElementById("backToStep2");
 
     // Variabel error
+    // Add costCenterError to error variables
     const amountError = document.getElementById("amountError"),
         accountError = document.getElementById("accountError"),
         rencanaError = document.getElementById("rencanaError"),
         uraianError = document.getElementById("uraianError"),
-        judulError = document.getElementById("judulError");
-
+        judulError = document.getElementById("judulError"),
+        costCenterError = document.getElementById("costCenterError");
     let stream,
         photoTaken = false;
 
@@ -296,14 +297,15 @@
      */
 
     async function fetchData() {
-        const [idRencanaData, accountSkkosData] = await Promise.all([
+        const [idRencanaData, accountSkkosData, costCenterData] = await Promise.all([
             apiFetch("/fetch_id_rencana"),
             apiFetch("/fetch_account_skkos"),
+            apiFetch("/fetch_cost_center")
         ]);
 
         if (idRencanaData) {
             const rencanaSelect = document.getElementById("rencanaIdSelect");
-            rencanaSelect.innerHTML = `<option value="" selected disabled>Pilih ID Rencana</option>`; // Reset opsi
+            rencanaSelect.innerHTML = `<option value="" selected disabled>Pilih ID Rencana</option>`;
             idRencanaData.forEach((id) => {
                 const option = document.createElement("option");
                 option.value = id;
@@ -314,12 +316,23 @@
 
         if (accountSkkosData) {
             const accountSelect = document.getElementById("accountIdSelect");
-            accountSelect.innerHTML = `<option value="" selected disabled>Pilih Akun SKKO</option>`; // Reset opsi
+            accountSelect.innerHTML = `<option value="" selected disabled>Pilih Akun SKKO</option>`;
             accountSkkosData.forEach((account) => {
                 const option = document.createElement("option");
                 option.value = account;
                 option.textContent = account;
                 accountSelect.appendChild(option);
+            });
+        }
+
+        if (costCenterData) {
+            const costCenterSelect = document.getElementById("costCenterSelect");
+            costCenterSelect.innerHTML = `<option value="" selected disabled>Pilih Cost Center</option>`;
+            costCenterData.forEach((costCenter) => {
+                const option = document.createElement("option");
+                option.value = costCenter;
+                option.textContent = costCenter;
+                costCenterSelect.appendChild(option);
             });
         }
     }
@@ -399,6 +412,17 @@
             hasError = true;
         }
 
+        // Add Cost Center validation
+        const costCenterSelect = document.getElementById("costCenterSelect");
+        if (costCenterSelect.value) {
+            costCenterError.classList.add("hidden");
+        } else {
+            costCenterError.classList.remove("hidden");
+            hasError = true;
+        }
+
+        if (hasError) return;
+
         // Validasi lainnya tetap sama
         if (amountInput.value) {
             amountError.classList.add("hidden");
@@ -427,14 +451,16 @@
         document.getElementById("formModal").classList.add("hidden");
         document.getElementById("summaryModal").classList.remove("hidden");
 
-        reviewInfo.innerHTML = `
-            <p><strong>Jumlah:</strong> ${sanitizeHTML(amountInput.value)}</p>
-            <p><strong>Mata Uang:</strong> ${sanitizeHTML(currencySelect.value)}</p>
-            <p><strong>Akun SKKO:</strong> ${sanitizeHTML(accountIdSelect.value)}</p>
-            <p><strong>ID Rencana:</strong> ${sanitizeHTML(rencanaIdSelect.value)}</p>
-            <p><strong>Uraian:</strong> ${sanitizeHTML(uraianInput.value)}</p>
-            <p><strong>Judul Laporan:</strong> ${sanitizeHTML(judulLaporanInput.value)}</p>
-        `;
+        // Update review info to include cost center
+            reviewInfo.innerHTML = `
+                <p><strong>Jumlah:</strong> ${sanitizeHTML(amountInput.value)}</p>
+                <p><strong>Mata Uang:</strong> ${sanitizeHTML(currencySelect.value)}</p>
+                <p><strong>Akun SKKO:</strong> ${sanitizeHTML(accountIdSelect.value)}</p>
+                <p><strong>ID Rencana:</strong> ${sanitizeHTML(rencanaIdSelect.value)}</p>
+                <p><strong>Cost Center:</strong> ${sanitizeHTML(document.getElementById("costCenterSelect").value)}</p>
+                <p><strong>Uraian:</strong> ${sanitizeHTML(uraianInput.value)}</p>
+                <p><strong>Judul Laporan:</strong> ${sanitizeHTML(judulLaporanInput.value)}</p>
+            `;
         submitButton.disabled = false;
         submitButton.focus();
     });
@@ -454,6 +480,7 @@
     submitButton.addEventListener("click", async () => {
         const selectedIdRencana = rencanaIdSelect.value;
         const selectedAccountId = accountIdSelect.value;
+        const selectedCostCenter = document.getElementById("costCenterSelect").value;
         const currency = currencySelect.value;
         const totalAmount = amountInput.value;
         const uraian = uraianInput.value;
@@ -465,6 +492,7 @@
         const payload = new FormData();
         payload.append("rencana_id", selectedIdRencana);
         payload.append("account_skkos_id", selectedAccountId);
+        payload.append("cost_center", selectedCostCenter); // Add this line
         payload.append("currency", currency);
         payload.append("amount", totalAmount);
         payload.append("uraian", uraian);
@@ -552,6 +580,13 @@
         const rencanaSelect = new Choices('#rencanaIdSelect', {
             searchEnabled: true,
             placeholderValue: 'Pilih ID Rencana',
+            shouldSort: false,
+            itemSelectText: '',
+        });
+
+        const costCenterSelect = new Choices('#costCenterSelect', {
+            searchEnabled: true,
+            placeholderValue: 'Pilih Cost Center',
             shouldSort: false,
             itemSelectText: '',
         });

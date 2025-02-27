@@ -165,18 +165,26 @@ def extract_total_from_receipt_gemini(image_path):
         return None
 
 
-def append_to_sheet(amount, rencana_id, account_skkos_id, uraian, judulLaporan, receipt_link, evidence_links):
+def append_to_sheet(amount, rencana_id, account_skkos_id, uraian, judulLaporan, receipt_link, evidence_links, cost_center):
     client = init_gspread_client()
     sheet = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet("REKAPREALISASI")
     gmt8 = pytz.timezone("Asia/Singapore")
     current_time = datetime.now(gmt8).strftime("%d.%m.%Y %H:%M:%S")
     data_to_append = [
-        current_time, amount, rencana_id, receipt_link, evidence_links,
-        account_skkos_id, "", uraian, judulLaporan
+        current_time,          # Column A - Timestamp
+        amount,               # Column B - Amount
+        rencana_id,          # Column C - Rencana ID
+        receipt_link,        # Column D - Receipt Link
+        evidence_links,      # Column E - Evidence Links
+        account_skkos_id,    # Column F - Account SKKO
+        "",                  # Column G - Empty
+        uraian,             # Column H - Uraian
+        judulLaporan,       # Column I - Judul Laporan
+        "",                 # Column J - Empty
+        cost_center,        # Column K - Cost Center
     ]
     next_row = len(sheet.col_values(1)) + 1
     sheet.insert_row(data_to_append, next_row)
-
 def query_from_sheet(sheet_name, column_idx):
     client = init_gspread_client()
     sheet = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet(sheet_name)
@@ -273,7 +281,10 @@ def submit_data():
     amount = request.form.get("amount")
     uraian = request.form.get("uraian")
     judulLaporan = request.form.get("judulLaporan")
-    if not all([rencana_id, account_skkos_id, currency, amount, uraian, judulLaporan]):
+    cost_center = request.form.get("cost_center")  # Add this line
+
+    # Update validation to include cost_center
+    if not all([rencana_id, account_skkos_id, currency, amount, uraian, judulLaporan, cost_center]):
         return jsonify({"success": False, "message": "Input formulir tidak lengkap"}), 400
     file_path = session.get("receipt_file_path")
     filename = session.get("receipt_filename")
@@ -369,6 +380,7 @@ def submit_data():
         judulLaporan,
         receipt_link,
         ", ".join(evidence_links),
+        cost_center,  # Add this parameter
     )
     return jsonify(success=True, message="Data saved successfully! Files uploaded to Google Drive via APIs.")
 
@@ -401,6 +413,15 @@ def fetch_account_skkos():
     except Exception as e:
         app.logger.error(f"Error fetching Account SKKOs: {str(e)}", exc_info=True)
         return jsonify({"error": "Error fetching Account SKKOs"}), 500
+
+@app.route("/fetch_cost_center", methods=["GET"])
+def fetch_cost_center():
+    try:
+        cost_center_data = query_from_sheet("costcenter", 1)
+        return jsonify(cost_center_data), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching Cost Center: {str(e)}", exc_info=True)
+        return jsonify({"error": "Error fetching Cost Center"}), 500
 
 @app.route("/upload_file", methods=["POST"])
 def upload_file_route():
