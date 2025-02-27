@@ -94,7 +94,7 @@ def get_rencana_details_from_sheet(rencana_id):
                 return {
                     "start_date_ar": record.get("start date A/R", ""),
                     "end_date_ar": record.get("end date A/R", ""),
-                    "requestor": record.get("Requestor", ""),
+                    "requestor": record.get("Pemohon", ""),
                     "unit": record.get("Unit", ""),
                     "nominal": record.get("Nominal", ""),
                     "id_rencana": record_id,
