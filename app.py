@@ -11,6 +11,7 @@ import imghdr
 import pytz
 import time
 from flask import Flask, request, jsonify, render_template, session
+from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from oauth2client.service_account import ServiceAccountCredentials
 from flask_talisman import Talisman
@@ -53,6 +54,7 @@ class DevelopmentConfig(Config):
 
 env = os.getenv("FLASK_ENV", "production")
 config_class = ProductionConfig if env == "production" else DevelopmentConfig
+executor = ThreadPoolExecutor(max_workers=3)  # Bisa disesuaikan
 
 app = Flask(__name__)
 app.config.from_object(config_class)
@@ -460,12 +462,24 @@ def submit_data_perencanaan():
 
         id_rencana = append_to_perencanaan(rencana_data, barang_data)
 
-        hookOnFormSubmit = requests.get(app.config["WEBHOOK_URL"])
+        # hookOnFormSubmit = requests.get(app.config["WEBHOOK_URL"])
     
-        if hookOnFormSubmit.status_code == 200:
-            print("Trigger berhasil dikirim!")
-        else:
-            print(f"Trigger gagal, error: {hookOnFormSubmit.text}")
+        # if hookOnFormSubmit.status_code == 200:
+        #     print("Trigger berhasil dikirim!")
+        # else:
+        #     print(f"Trigger gagal, error: {hookOnFormSubmit.text}")
+        def trigger_webhook():
+            try:
+                hookOnFormSubmit = requests.get(app.config["WEBHOOK_URL"])
+                if hookOnFormSubmit.status_code == 200:
+                    print("Trigger berhasil dikirim!")
+                else:
+                    print(f"Trigger gagal, error: {hookOnFormSubmit.text}")
+            except Exception as e:
+                print(f"Webhook error: {str(e)}")
+        
+        # Jalankan request webhook secara async
+        executor.submit(trigger_webhook)
         
     except Exception as e:
         app.logger.error(f"Gagal menyimpan data: {str(e)}")
