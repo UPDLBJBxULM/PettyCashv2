@@ -17,7 +17,7 @@
 
 <body class="bg-gray-100" style="overflow-x: hidden; overflow-y: auto;">
   <div id="app">
-    <div v-if="loadingFetchData"id="splashScreen" class="splash-screen">
+    <div v-if="loadingFetchData" id="splashScreen" class="splash-screen">
       <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Petty Easy Logo" class="splash-logo" />
     </div>
     <!-- Hapus bagian kamera dan tambahkan form -->
@@ -57,7 +57,7 @@
             <select v-model="form.pemohon" class="w-full border rounded-lg p-2" required>
               <option value="" disabled selected>Pilih Pemohon</option>
               <option v-for="p in pemohonOptions" :value="p">
-                ${p}  
+                ${p}
               </option>
             </select>
             <div v-if="error.pemohon" class="text-red-500 text-sm mt-1">
@@ -238,7 +238,7 @@
 
           <div class="sm:col-span-2">
             <label class="block text sm:text-base text-gray-700 mb-1 sm:mb-2">
-              Jmlh <span class="text-red-500">*</span>
+              Jumlah <span class="text-red-500">*</span>
               <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
                 ⓘ
                 <span
@@ -246,7 +246,7 @@
                   Jumlah barang yang diajukan
                 </span>
               </span>
-              <input type="number" v-model="barang.jumlah" @input="hitungTotal(index)" placeholder="Jml *"
+              <input type="number" v-model="barang.jumlah" @input="hitungTotal(index)" placeholder="Jumlah *"
                 class="w-full text-sm sm:text-base border rounded-lg p-2" required>
               <div v-if="error.daftarBarang[index]?.jumlah" class="text-red-500 text-sm">
                 ${ error.daftarBarang[index].jumlah }
@@ -305,10 +305,10 @@
         </button>
       </div>
     </div>
-      <!-- Modal Pemrosesan -->
+    <!-- Modal Pemrosesan -->
     <div v-if="isLoading" id="processingModal"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" role="dialog"
-      aria-modal="true" aria-labelledby="processingModalTitle">
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true"
+      aria-labelledby="processingModalTitle">
       <div class="bg-white rounded-lg p-6 text-center">
         <h2 id="processingModalTitle" class="sr-only">Pemrosesan</h2>
         <p class="text-gray-800 mb-4">Sedang diproses, harap tunggu...</p>
@@ -317,13 +317,16 @@
       </div>
     </div>
     <!-- Modal untuk pesan umum -->
-    <div v-if="showMessageModal" id="modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" role="dialog"
-      aria-modal="true" aria-labelledby="modalMessage">
+    <div v-if="showMessageModal" id="modal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true"
+      aria-labelledby="modalMessage">
       <div class="bg-white rounded-lg p-6 text-center w-full max-w-md mx-auto">
-        <svg v-if ="isSuccess"class="w-16 h-16 mx-auto mb-4 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg v-if="isSuccess" class="w-16 h-16 mx-auto mb-4 text-green-500" xmlns="http://www.w3.org/2000/svg"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
-        <svg v-if="!isSuccess"class="w-16 h-16 mx-auto mb-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg v-if="!isSuccess" class="w-16 h-16 mx-auto mb-4 text-red-500" xmlns="http://www.w3.org/2000/svg"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
         <h2 id="modalMessage" class="mb-4 text-gray-800 text-lg font-semibold">${modalMessage}</h2>
@@ -346,10 +349,10 @@
       data() {
         return {
           isLoading: false,
-          showMessageModal:false,
-          modalMessage:'',
-          isSuccess:true,
-          loadingFetchData:true,
+          showMessageModal: false,
+          modalMessage: '',
+          isSuccess: true,
+          loadingFetchData: true,
           form: {
             pemohon: '',
             noHp: '',
@@ -384,7 +387,7 @@
           pemohonOptions: [],
           accountableOptions: [],
           unitOptions: [],
-          satuanOptions:[],
+          satuanOptions: [],
           currencyOptions: ['IDR', 'USD'],
         }
       },
@@ -394,32 +397,32 @@
         }
 
       },
-      mounted(){
+      mounted() {
         this.fetchDataPerencanaan();
       },
       methods: {
         async fetchDataPerencanaan() {
-    try {
-      this.loadingFetchData=true;
-      const response = await fetch("/fetch_data_perencanaan");
-      if (!response.ok) throw new Error("Gagal mengambil data perencanaan");
+          try {
+            this.loadingFetchData = true;
+            const response = await fetch("/fetch_data_perencanaan");
+            if (!response.ok) throw new Error("Gagal mengambil data perencanaan");
 
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
 
-      // Masukkan data ke dalam form jika tersedia
-      this.pemohonOptions = data.pemohon || "";
-      this.accountableOptions = data.accountable || "";
-      this.unitOptions = data.unit || "";
-      this.satuanOptions = data.satuan || "",
+            // Masukkan data ke dalam form jika tersedia
+            this.pemohonOptions = data.pemohon || "";
+            this.accountableOptions = data.accountable || "";
+            this.unitOptions = data.unit || "";
+            this.satuanOptions = data.satuan || "",
 
-      console.log("Data perencanaan berhasil dimuat:", data);
-    } catch (error) {
-      console.error("Error fetching data perencanaan:", error);
-    } finally {
-      this.loadingFetchData=false
-    }
-  },
+              console.log("Data perencanaan berhasil dimuat:", data);
+          } catch (error) {
+            console.error("Error fetching data perencanaan:", error);
+          } finally {
+            this.loadingFetchData = false
+          }
+        },
         formatPrice(value) {
           if (!value) return "0";
           return Number(value).toLocaleString("id-ID"); // Format angka dengan koma
@@ -504,63 +507,63 @@
             // }, 1000);
             if (!response.ok) throw new Error('Gagal mengirim data');
             console.log(response);
-            
+
             const result = await response.json();
 
             if (result.success) {
               this.$emit('submit-success', result.data);
-              this.isSuccess=true;
+              this.isSuccess = true;
               this.openMessageModal('Pengajuan Berhasil Di Submit')
               this.resetForm();
             } else {
               throw new Error(result.message || 'Terjadi kesalahan');
             }
           } catch (error) {
-            this.isSuccess=false;
+            this.isSuccess = false;
             this.openMessageModal('Pengajuan Gagal')
-            
+
           } finally {
             this.isLoading = false;
           }
         },
         resetForm() {
-    // Reset nilai form ke default
-    this.form = {
-      pemohon: '',
-      noHp: '',
-      accountable: '',
-      unit: '',
-      perihal: '',
-      daftarBarang: [{
-        nama: '',
-        satuan: '',
-        harga: '',
-        jumlah: '',
-        total: '',
-        currency: 'IDR', // Nilai default untuk currency
-        manual: false
-      }],
-      total: 0
-    };
+          // Reset nilai form ke default
+          this.form = {
+            pemohon: '',
+            noHp: '',
+            accountable: '',
+            unit: '',
+            perihal: '',
+            daftarBarang: [{
+              nama: '',
+              satuan: '',
+              harga: 0,
+              jumlah: 0,
+              total: 0,
+              currency: 'IDR', // Nilai default untuk currency
+              manual: false
+            }],
+            total: 0
+          };
 
-    // Reset error messages
-    this.errors = {
-      pemohon: '',
-      noHp: '',
-      accountable: '',
-      unit: '',
-      perihal: '',
-      daftarBarang: []
-    };
+          // Reset error messages
+          this.errors = {
+            pemohon: '',
+            noHp: '',
+            accountable: '',
+            unit: '',
+            perihal: '',
+            daftarBarang: []
+          };
 
-    // Reset state tambahan jika ada
-    this.totalKeseluruhan = 0;
-    
-    // Optional: Reset validasi form library (jika menggunakan Vuelidate dll)
-    if (this.$v) {
-      this.$v.$reset();
-    }
-  },
+          // Reset state tambahan jika ada
+          this.totalKeseluruhan = 0;
+
+          // Optional: Reset validasi form library (jika menggunakan Vuelidate dll)
+          if (this.$v) {
+            this.$v.$reset();
+          }
+        },
         resetErrors() {
           this.error = {
             pemohon: '',
@@ -619,12 +622,12 @@
             window.location.href = '/'; // Ganti dengan URL sebenarnya
           }
         },
-        closeMessageModal(){
-          this.showMessageModal=false
+        closeMessageModal() {
+          this.showMessageModal = false
         },
-        openMessageModal(message){
-          this.showMessageModal=true
-          this.modalMessage=message
+        openMessageModal(message) {
+          this.showMessageModal = true
+          this.modalMessage = message
         }
       },
       delimiters: ["${", "}"]
