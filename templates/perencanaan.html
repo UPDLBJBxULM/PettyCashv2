@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Pengajuan PettyCash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Link ke file CSS kustom -->
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <!-- Choice.js CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <!-- Tambahkan Vue.js CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body class="bg-gray-100" style="overflow-x: hidden; overflow-y: auto;">
+  <div id="app">
+    <div v-if="loadingFetchData"id="splashScreen" class="splash-screen">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Petty Easy Logo" class="splash-logo" />
+    </div>
+    <!-- Hapus bagian kamera dan tambahkan form -->
+    <div class="container mx-auto p-6 max-w-6xl" style="background-color:transparent ;">
+
+      <h1 class="text-2xl font-bold mb-6">Form Pengajuan PettyCash</h1>
+      <!-- <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+
+        <div class="mt-6 flex justify-between">
+          <button @click="kembali" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition">
+            Kembali
+          </button>
+
+          <button @click="submitForm"
+            class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition">
+            Submit Pengajuan
+          </button>
+        </div>
+      </div> -->
+
+      <!-- Form Pengajuan -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Pemohon -->
+          <div>
+            <label class="block text-gray-700 mb-2">
+              Pemohon
+              <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Pilih pemohon dari daftar yang tersedia
+                </span>
+              </span>
+            </label>
+            <select v-model="form.pemohon" class="w-full border rounded-lg p-2" required>
+              <option value="" disabled selected>Pilih Pemohon</option>
+              <option v-for="p in pemohonOptions" :value="p">
+                ${p}  
+              </option>
+            </select>
+            <div v-if="error.pemohon" class="text-red-500 text-sm mt-1">
+              ${ error.pemohon }
+            </div>
+          </div>
+
+          <!-- No HP Pemohon -->
+          <div>
+            <label class="block text-gray-700 mb-2">
+              No HP Pemohon
+              <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Masukkan nomor HP aktif pemohon
+                </span>
+              </span>
+            </label>
+            <div class="flex">
+              <span class="text-gray-700 p-2 rounded-l-lg bg-gray-200 ">+62</span>
+              <input type="number" v-model="form.noHp" class="w-full border rounded-r-lg p-2">
+            </div>
+            <div v-if="error.noHp" class="text-red-500 text-sm mt-1">
+              ${ error.noHp }
+            </div>
+          </div>
+
+          <!-- Accountable -->
+          <div>
+            <label class="block text-gray-700 mb-2">
+              Accountable
+              <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Pilih pihak yang bertanggung jawab
+                </span>
+              </span>
+            </label>
+            <select v-model="form.accountable" class="w-full border rounded-lg p-2" required>
+              <option value="" disabled selected>Pilih Accountable</option>
+              <option v-for="a in accountableOptions" :value="a">${ a }</option>
+            </select>
+            <div v-if="error.accountable" class="text-red-500 text-sm mt-1">
+              ${ error.accountable }
+            </div>
+          </div>
+
+          <!-- Unit -->
+          <div>
+            <label class="block text-gray-700 mb-2">
+              Unit
+              <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Pilih unit terkait pengajuan
+                </span>
+              </span>
+            </label>
+            <select v-model="form.unit" class="w-full border rounded-lg p-2" required>
+              <option value="" disabled selected>Pilih Unit</option>
+              <option v-for="u in unitOptions" :value="u">${ u }</option>
+            </select>
+            <div v-if="error.unit" class="text-red-500 text-sm mt-1">
+              ${ error.unit }
+            </div>
+
+          </div>
+
+          <!-- Perihal -->
+          <div class="lg:col-span-2">
+            <label class="block text-gray-700 mb-2">
+              Perihal <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Deskripsi singkat pengajuan yang diajukan
+                </span>
+              </span>
+            </label>
+            <textarea v-model="form.perihal" class="w-full text-sm sm:text-base border rounded-lg p-2"
+              required></textarea>
+            <div v-if="error.perihal" class="text-red-500 text-sm mt-1">
+              ${ error.perihal }
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dynamic Form Barang -->
+      <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row justify-between mb-4">
+          <h2 class="text-lg sm:text-xl font-semibold mb-2 sm:mb-0">Daftar Barang</h2>
+          <!-- <button @click="tambahBarang"
+              class="text-sm sm:text-base bg-blue-500 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg">
+              + Tambah Barang
+            </button> -->
+        </div>
+        <!-- <div class="grid grid-cols-5 gap-4 mb-4 ml-1">
+          <h2>Nama barang</h2>
+          <h2>Satuan</h2>
+          <h2>jumlah</h2>
+          <h2>harga</h2>
+          <h2>total</h2>
+        </div> -->
+
+        <div v-for="(barang, index) in form.daftarBarang" :key="index"
+          class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 mb-3">
+          <div class="sm:col-span-3">
+            <label class="block text sm:text-base text-gray-700 mb-1 sm:mb-2">
+              Nama Barang <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden sm:group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Nama barang yang diajukan
+                </span>
+              </span>
+              <input type="text" v-model="barang.nama" placeholder="Nama *"
+                class="w-full text-sm sm:text-base border rounded-lg p-2" required>
+              <div v-if="error.daftarBarang[index]?.nama" class="text-red-500 text-sm">
+                ${ error.daftarBarang[index].nama }
+              </div>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text sm:text-base text-gray-700 mb-1 sm:mb-2">
+              Satuan <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden sm:group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Satuan barang yang diajukan
+                </span>
+              </span>
+              <input type="text" v-model="barang.satuan" placeholder="Satuan *"
+                class="w-full text-sm sm:text-base border rounded-lg p-2" list="satuan-list" required>
+              <datalist id="satuan-list">
+                <option v-for="s in satuanOptions" :key="s" :value="s"></option>
+              </datalist>
+              <div v-if="error.daftarBarang[index]?.satuan" class="text-red-500 text-sm">
+                ${ error.daftarBarang[index].satuan }
+              </div>
+
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text sm:text-base text-gray-700 mb-1 sm:mb-2">
+              Harga <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden sm:group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Harga satuan barang
+                </span>
+              </span>
+              <div class="flex">
+                <select v-model="barang.currency" class="text-gray-700 rounded-l-lg bg-gray-200 px- py-1 border">
+                  <option v-for="currency in currencyOptions" :key="currency" :value="currency">
+                    ${ currency }
+                  </option>
+                </select>
+                <input type="number" :value="barang.harga" @input="updateHarga($event, index)" placeholder="Harga *"
+                  class="w-full text-sm sm:text-base border rounded-r-lg p-2" required>
+
+              </div>
+              <div v-if="error.daftarBarang[index]?.harga" class="text-red-500 text-sm">
+                ${ error.daftarBarang[index].harga }
+              </div>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text sm:text-base text-gray-700 mb-1 sm:mb-2">
+              Jmlh <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden sm:group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Jumlah barang yang diajukan
+                </span>
+              </span>
+              <input type="number" v-model="barang.jumlah" @input="hitungTotal(index)" placeholder="Jml *"
+                class="w-full text-sm sm:text-base border rounded-lg p-2" required>
+              <div v-if="error.daftarBarang[index]?.jumlah" class="text-red-500 text-sm">
+                ${ error.daftarBarang[index].jumlah }
+              </div>
+
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text sm:text-base text-gray-700 mb-1 sm:mb-2">
+              Total(Rp) <span class="text-red-500">*</span>
+              <span class="inline-block ml-1 text-gray-400 cursor-help relative group">
+                ⓘ
+                <span
+                  class="hidden sm:group-hover:block absolute bottom-full left-0 bg-gray-700 text-white text-xs rounded p-2 w-48">
+                  Total harga barang yang diajukan
+                </span>
+              </span>
+              <input type="number" v-model="barang.total" @input="manualTotal(index)" placeholder="Total"
+                class="w-full text-sm sm:text-base border rounded-lg p-2">
+          </div>
+
+
+          <!-- <div class="sm:col-span-2 flex items-center gap-1">
+            <label class="block text sm:text-base text-gray-700 mb-1 sm:mb-2">
+              Total
+              <input type="number" v-model="barang.total" @input="manualTotal(index)" placeholder="Total"
+                class="w-full text-sm sm:text-base border rounded-lg p-2">
+          </div> -->
+          <div class="flex justify-center p-5 pt-4">
+            <button @click="hapusBarang(index)"
+              class="text-sm sm:text-base bg-red-500 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg mt-2">
+              &times;</button>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between mb-4">
+          <button @click="tambahBarang"
+            class="text-sm sm:text-base bg-blue-500 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg">
+            + Tambah Barang
+          </button>
+        </div>
+        <!-- Total Keseluruhan -->
+        <div class="mt-4 text-right text-sm sm:text-base font-bold">
+          Total Keseluruhan: Rp ${ formatPrice(totalKeseluruhan) }
+        </div>
+      </div>
+
+      <!-- Tombol Aksi -->
+      <div class="mt-4 flex flex-col sm:flex-row justify-between gap-2">
+        <button @click="kembali"
+          class="order-2 sm:order-1 bg-red-500 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+          Kembali
+        </button>
+
+        <button @click="submitForm"
+          class="order-1 sm:order-2 bg-green-500 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+          Submit Pengajuan
+        </button>
+      </div>
+    </div>
+      <!-- Modal Pemrosesan -->
+    <div v-if="isLoading" id="processingModal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" role="dialog"
+      aria-modal="true" aria-labelledby="processingModalTitle">
+      <div class="bg-white rounded-lg p-6 text-center">
+        <h2 id="processingModalTitle" class="sr-only">Pemrosesan</h2>
+        <p class="text-gray-800 mb-4">Sedang diproses, harap tunggu...</p>
+        <!-- Spinner: Tambahkan CSS spinner atau gunakan SVG -->
+        <div class="spinner" role="status" aria-label="Memproses"></div>
+      </div>
+    </div>
+    <!-- Modal untuk pesan umum -->
+    <div v-if="showMessageModal" id="modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" role="dialog"
+      aria-modal="true" aria-labelledby="modalMessage">
+      <div class="bg-white rounded-lg p-6 text-center w-full max-w-md mx-auto">
+        <svg v-if ="isSuccess"class="w-16 h-16 mx-auto mb-4 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <svg v-if="!isSuccess"class="w-16 h-16 mx-auto mb-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <h2 id="modalMessage" class="mb-4 text-gray-800 text-lg font-semibold">${modalMessage}</h2>
+        <button
+          class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          @click="closeMessageModal">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          isLoading: false,
+          showMessageModal:false,
+          modalMessage:'',
+          isSuccess:true,
+          loadingFetchData:true,
+          form: {
+            pemohon: '',
+            noHp: '',
+            accountable: '',
+            unit: '',
+            perihal: '',
+            daftarBarang: [{
+              nama: '',
+              satuan: '',
+              harga: 0,
+              currency: 'IDR',
+              jumlah: 0,
+              total: 0,
+              manual: false
+            }]
+          },
+          error: {
+            pemohon: '',
+            noHp: '',
+            accountable: '',
+            unit: '',
+            perihal: '',
+            daftarBarang: [{
+              nama: '',
+              satuan: '',
+              harga: '',
+              currency: '',
+              jumlah: '',
+              total: '',
+            }]
+          },
+          pemohonOptions: [],
+          accountableOptions: [],
+          unitOptions: [],
+          satuanOptions:[],
+          currencyOptions: ['IDR', 'USD'],
+        }
+      },
+      computed: {
+        totalKeseluruhan() {
+          return this.form.daftarBarang.reduce((sum, barang) => sum + Number(barang.total), 0);
+        }
+
+      },
+      mounted(){
+        this.fetchDataPerencanaan();
+      },
+      methods: {
+        async fetchDataPerencanaan() {
+    try {
+      this.loadingFetchData=true;
+      const response = await fetch("/fetch_data_perencanaan");
+      if (!response.ok) throw new Error("Gagal mengambil data perencanaan");
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // Masukkan data ke dalam form jika tersedia
+      this.pemohonOptions = data.pemohon || "";
+      this.accountableOptions = data.accountable || "";
+      this.unitOptions = data.unit || "";
+      this.satuanOptions = data.satuan || "",
+
+      console.log("Data perencanaan berhasil dimuat:", data);
+    } catch (error) {
+      console.error("Error fetching data perencanaan:", error);
+    } finally {
+      this.loadingFetchData=false
+    }
+  },
+        formatPrice(value) {
+          if (!value) return "0";
+          return Number(value).toLocaleString("id-ID"); // Format angka dengan koma
+        },
+
+        updateHarga(event, index) {
+          // const rawValue = event.target.value.replace(/\D/g, ""); // Hanya angka
+          let rawValue = event.target.value;
+          this.form.daftarBarang[index].harga = parseFloat(rawValue) || 0;
+          this.hitungTotal(index);
+        },
+        hitungTotal(index) {
+          const barang = this.form.daftarBarang[index];
+          if (!barang.manual) {
+            if (barang.currency === 'USD') {
+              barang.total = barang.harga * barang.jumlah * 16000
+            } else {
+              barang.total = barang.harga * barang.jumlah;
+            }
+          }
+        },
+        manualTotal(index) {
+          this.form.daftarBarang[index].manual = true;
+        },
+        tambahBarang() {
+          this.form.daftarBarang.push({
+            nama: '',
+            satuan: '',
+            currency: 'IDR',
+            harga: 0,
+            jumlah: 0,
+            total: 0,
+            manual: false
+          });
+          this.error.daftarBarang.push({
+            nama: '',
+            satuan: '',
+            harga: '',
+            currency: '',
+            jumlah: '',
+            total: '',
+          });
+        },
+        hapusBarang(index) {
+          if (this.form.daftarBarang.length > 1) {
+            this.form.daftarBarang.splice(index, 1);
+          }
+        },
+        async submitForm() {
+          // Validasi sederhana
+          this.resetErrors();
+          if (this.validateForm()) return;
+
+          try {
+            this.isLoading = true;
+
+            const formData = {
+              ...this.form,
+              total: this.totalKeseluruhan,
+              daftarBarang: this.form.daftarBarang.map(barang => ({
+                ...barang,
+                harga: Number(barang.harga),
+                jumlah: Number(barang.jumlah),
+                total: Number(barang.total)
+              }))
+            };
+
+            const response = await fetch("/submit/perencanaan", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            });
+            // const response = {
+            //   ok: true,
+            //   json: () => Promise.resolve({ success: true, data: formData })
+            // }
+            // console.log(response);
+            // setTimeout(() => {
+            //   this.isLoading = true;
+            // }, 1000);
+            if (!response.ok) throw new Error('Gagal mengirim data');
+            console.log(response);
+            
+            const result = await response.json();
+
+            if (result.success) {
+              this.$emit('submit-success', result.data);
+              this.isSuccess=true;
+              this.openMessageModal('Pengajuan Berhasil Di Submit')
+              this.resetForm();
+            } else {
+              throw new Error(result.message || 'Terjadi kesalahan');
+            }
+          } catch (error) {
+            this.isSuccess=false;
+            this.openMessageModal('Pengajuan Gagal')
+            
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        resetForm() {
+    // Reset nilai form ke default
+    this.form = {
+      pemohon: '',
+      noHp: '',
+      accountable: '',
+      unit: '',
+      perihal: '',
+      daftarBarang: [{
+        nama: '',
+        satuan: '',
+        harga: '',
+        jumlah: '',
+        total: '',
+        currency: 'IDR', // Nilai default untuk currency
+        manual: false
+      }],
+      total: 0
+    };
+
+    // Reset error messages
+    this.errors = {
+      pemohon: '',
+      noHp: '',
+      accountable: '',
+      unit: '',
+      perihal: '',
+      daftarBarang: []
+    };
+
+    // Reset state tambahan jika ada
+    this.totalKeseluruhan = 0;
+    
+    // Optional: Reset validasi form library (jika menggunakan Vuelidate dll)
+    if (this.$v) {
+      this.$v.$reset();
+    }
+  },
+        resetErrors() {
+          this.error = {
+            pemohon: '',
+            noHp: '',
+            accountable: '',
+            unit: '',
+            perihal: '',
+            daftarBarang: this.form.daftarBarang.map(() => ({
+              nama: '',
+              satuan: '',
+              harga: '',
+              currency: '',
+              jumlah: '',
+              total: '',
+            }))
+          };
+        },
+        validateForm() {
+          let hasError = false;
+          // resetErrors();
+          const requiredFields = ['pemohon', 'noHp', 'accountable', 'unit', 'perihal'];
+          requiredFields.forEach(field => {
+            if (!this.form[field]) {
+              this.error[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} wajib diisi`;
+              hasError = true;
+            }
+          });
+
+          this.form.daftarBarang.forEach((barang, index) => {
+            const errors = this.validateBarang(barang);
+            if (Object.keys(errors).length > 0) {
+              this.error.daftarBarang[index] = errors;
+              hasError = true;
+            }
+          });
+
+          return hasError;
+        },
+
+        validateBarang(barang) {
+          const errors = {};
+          const requiredFields = ['nama', 'satuan', 'harga', 'currency', 'jumlah', 'total'];
+
+          requiredFields.forEach(field => {
+            if (!barang[field]) {
+              errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} wajib diisi`;
+            }
+          });
+
+          return errors;
+        },
+
+        kembali() {
+          if (confirm('Apakah anda yakin ingin kembali? Perubahan yang belum disimpan akan hilang.')) {
+            // Simulasi navigasi kembali
+            window.location.href = '/'; // Ganti dengan URL sebenarnya
+          }
+        },
+        closeMessageModal(){
+          this.showMessageModal=false
+        },
+        openMessageModal(message){
+          this.showMessageModal=true
+          this.modalMessage=message
+        }
+      },
+      delimiters: ["${", "}"]
+    }).mount('#app');
+
+  </script>
+</body>
+
+</html>

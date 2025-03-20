@@ -10,6 +10,7 @@ pyvenv.cfg
 venv/
 env/
 */site-packages/
+PTV2/
 
 # Log files
 *.log
@@ -25,6 +26,7 @@ tmp/
 
 # Environment configuration files
 .env
+settings.json
 
 # Credentials or sensitive data
 credentials/service_account_key.json

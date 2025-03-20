@@ -16,13 +16,15 @@ from oauth2client.service_account import ServiceAccountCredentials
 from flask_talisman import Talisman
 from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 import google.generativeai as genai
 from PIL import Image
 import io
 import re
+import traceback
 
 load_dotenv(dotenv_path=".env")
+
 
 class Config:
     SECRET_KEY = secrets.token_hex(32)
@@ -33,6 +35,7 @@ class Config:
     RECEIPT_API_ENDPOINT = os.getenv("RECEIPT_API_ENDPOINT")
     EVIDENCE_API_ENDPOINT = os.getenv("EVIDENCE_API_ENDPOINT")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    WEBHOOK_URL = os.getenv("WEBHOOK_URL")
     SCOPES = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive",
@@ -185,6 +188,8 @@ def append_to_sheet(amount, rencana_id, account_skkos_id, uraian, judulLaporan, 
     ]
     next_row = len(sheet.col_values(1)) + 1
     sheet.insert_row(data_to_append, next_row)
+    
+
 def query_from_sheet(sheet_name, column_idx):
     client = init_gspread_client()
     sheet = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet(sheet_name)
@@ -239,6 +244,9 @@ def fetch_uraian_laporan_suggestions():
 @app.route("/")
 def index():
     return render_template("index.html")
+@app.route("/perencanaan")
+def perencanaan():
+    return render_template("perencanaan.html")
 
 @app.route("/fetch_judul_laporan_suggestions", methods=["GET"])
 def fetch_judul_laporan_suggestions_api():
@@ -384,6 +392,182 @@ def submit_data():
     )
     return jsonify(success=True, message="Data saved successfully! Files uploaded to Google Drive via APIs.")
 
+@app.route("/submit/perencanaan", methods=["POST"])
+def submit_data_perencanaan():
+    # Ambil data dari request JSON
+    data = request.get_json()
+    
+    # Validasi field wajib
+    required_fields = [
+        "pemohon", "noHp", "accountable", 
+        "unit", "perihal", "daftarBarang", "total"
+    ]
+    
+    # Cek field utama
+    missing_fields = [field for field in required_fields if not data.get(field)]
+    if missing_fields:
+        return jsonify({
+            "success": False,
+            "message": f"Field berikut wajib diisi: {', '.join(missing_fields)}"
+        }), 400
+
+    # Validasi daftar barang (sesuai kolom sheet generetepdfrencana)
+    for index, barang in enumerate(data["daftarBarang"]):
+        required_item_fields = [
+            "nama", "satuan", "harga", 
+            "jumlah", "total"  # Currency tidak dimasukkan ke sheet
+        ]
+        missing_item_fields = [field for field in required_item_fields if not barang.get(field)]
+        
+        if missing_item_fields:
+            return jsonify({
+                "success": False,
+                "message": f"Barang ke-{index+1} belum lengkap: {', '.join(missing_item_fields)}"
+            }), 400
+
+    # Validasi tipe data numerik
+    try:
+        int(data["noHp"])  # Validasi nomor HP
+        for barang in data["daftarBarang"]:
+            float(barang["harga"])
+            int(barang["jumlah"])
+            float(barang["total"])
+        float(data["total"])
+    except (ValueError, TypeError):
+        return jsonify({
+            "success": False,
+            "message": "Format numerik tidak valid"
+        }), 400
+
+    # Format data untuk disimpan
+    try:
+        rencana_data = {
+            "pemohon": data["pemohon"],
+            "noHp": data["noHp"],
+            "accountable": data["accountable"],
+            "unit": data["unit"],
+            "perihal": data["perihal"],
+            "total": data["total"]
+        }
+        
+        barang_data = [{
+            "nama": item["nama"],
+            "satuan": item["satuan"],
+            "harga": item["harga"],
+            "jumlah": item["jumlah"],
+            "total": item["total"]
+        } for item in data["daftarBarang"]]
+
+        id_rencana = append_to_perencanaan(rencana_data, barang_data)
+
+        hookOnFormSubmit = requests.get(app.config["WEBHOOK_URL"])
+    
+        if hookOnFormSubmit.status_code == 200:
+            print("Trigger berhasil dikirim!")
+        else:
+            print(f"Trigger gagal, error: {hookOnFormSubmit.text}")
+        
+    except Exception as e:
+        app.logger.error(f"Gagal menyimpan data: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "Terjadi kesalahan server saat menyimpan data"
+        }), 500
+
+    return jsonify({
+        "success": True,
+        "message": "Data berhasil disimpan",
+        "data": {
+            "id_rencana": id_rencana,
+            "pemohon": data["pemohon"],
+            "unit": data["unit"],
+            "total": data["total"]
+        }
+    })
+
+def add_business_days(start_date, business_days_to_add):
+    current_date = start_date
+    days_added = 0
+    while days_added < business_days_to_add:
+        current_date += timedelta(days=1)
+        if current_date.weekday() < 5:  # 0-4 = Senin-Jumat
+            days_added += 1
+    return current_date
+
+def append_to_perencanaan(rencana_data, barang_data):
+    try:
+        client = init_gspread_client()
+        gmt8 = pytz.timezone("Asia/Singapore")
+        # Waktu saat ini
+
+        current_datetime = datetime.now(gmt8)
+        current_time = current_datetime.strftime("%d/%m/%Y %H:%M:%S")
+        
+        # ================= PERHITUNGAN TANGGAL =================
+        # Start Date: 7 hari setelah tanggal sekarang
+        start_date = current_datetime + timedelta(days=7)
+        
+        # End Date: 5 hari kerja setelah start date (lewati Sabtu-Minggu)
+        end_date = add_business_days(start_date, 4)
+        
+        # Format tanggal
+        formatted_start_date = start_date.strftime("%d/%m/%Y")
+        formatted_end_date = end_date.strftime("%d/%m/%Y")
+
+        # ================= SHEET RENCANA =================
+        sheet_rencana = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet("RENCANA")
+        
+        # Generate ID Rencana (Timestamp Unix)
+        nip_for_id = rencana_data["accountable"].split("_")[1]
+        id_rencana = f"{nip_for_id}{int(datetime.now(gmt8).timestamp())}"
+        
+        # Format data untuk sheet rencana
+        rencana_row = [
+            current_time,               # Timestamp submit
+            formatted_start_date,       # Start Date
+            formatted_end_date,         # End Date
+            rencana_data["pemohon"],    # Pemohon
+            rencana_data["accountable"],# Accountable
+            rencana_data["perihal"],    # Perihal
+            rencana_data["noHp"],       # No HP
+            rencana_data["unit"],       # Unit
+            rencana_data["total"],      # Total
+            id_rencana                  # ID Rencana
+        ]
+        
+        # Tambahkan ke sheet rencana
+        sheet_rencana.append_row(rencana_row,table_range="A1")
+        
+        # ================= SHEET GENERETEPDFRENCANA =================
+        sheet_pdf = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet("GENERATEPDFRENCANA")
+        
+        # Format data barang
+        pdf_rows = []
+        for barang in barang_data:
+            pdf_row = [
+                id_rencana,            # id_rencana
+                barang["nama"],        # nama_barang
+                barang["satuan"],      # satuan
+                barang["harga"],       # harga
+                barang["jumlah"],      # jumlah
+                barang["total"]        # total
+            ]
+            pdf_rows.append(pdf_row)
+        
+        # Tambahkan semua barang sekaligus
+        if pdf_rows:
+            sheet_pdf.append_rows(pdf_rows)
+            
+        return id_rencana
+        
+    except Exception as e:
+        app.logger.error(f"Gagal menyimpan ke Google Sheet: {str(e)}")
+        app.logger.error(f"Detail error: {traceback.format_exc()}")
+        raise e
+
+
+
+
 @app.route("/fetch_id_rencana", methods=["GET"])
 def fetch_id_rencana():
     try:
@@ -404,6 +588,23 @@ def fetch_id_rencana():
     except Exception as e:
         app.logger.error(f"Error fetching Id Rencana: {str(e)}", exc_info=True)
         return jsonify({"error": "Error fetching Id Rencana"}), 500
+
+@app.route("/fetch_data_perencanaan", methods=["GET"])
+def fetch_data_perencanaan():
+    try:
+        pemohon = query_from_sheet("REQUESTOR",4)[1:] 
+        accountable=query_from_sheet("ACCOUNTABLE",4)[1:] 
+        unit=query_from_sheet("UNIT",1)[1:] 
+        satuan = list(set(query_from_sheet("GENERATEPDFRENCANA", 3)[7:]))
+        return jsonify({
+            "pemohon": pemohon,
+            "accountable": accountable,
+            "unit": unit,
+            "satuan": satuan
+        }), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching data perencanaan:{str(e)}",exc_info=True)
+        return jsonify({"error":"Error fetching data Perencanaan"})
 
 @app.route("/fetch_account_skkos", methods=["GET"])
 def fetch_account_skkos():
