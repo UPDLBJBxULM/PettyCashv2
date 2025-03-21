@@ -404,25 +404,68 @@
         async fetchDataPerencanaan() {
           try {
             this.loadingFetchData = true;
-            const response = await fetch("/fetch_data_perencanaan");
-            if (!response.ok) throw new Error("Gagal mengambil data perencanaan");
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-
-            // Masukkan data ke dalam form jika tersedia
-            this.pemohonOptions = data.pemohon || "";
-            this.accountableOptions = data.accountable || "";
-            this.unitOptions = data.unit || "";
-            this.satuanOptions = data.satuan || "",
-
-              console.log("Data perencanaan berhasil dimuat:", data);
+            await Promise.all([
+              this.fetchPemohon(),
+              this.fetchAccountable(),
+              this.fetchUnit(),
+              this.fetchSatuan(),
+            ]);
           } catch (error) {
-            console.error("Error fetching data perencanaan:", error);
+            console.error("Error fetching data:", error);
+            this.openMessageModal("data Gagal Dimuat",false)
           } finally {
-            this.loadingFetchData = false
+            this.loadingFetchData = false;
           }
         },
+        async fetchPemohon() {
+          try {
+            const response = await fetch("/fetch_pemohon");
+            if (!response.ok) throw new Error("Gagal mengambil data pemohon");
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            this.pemohonOptions = data.pemohon || "";
+          } catch (error) {
+            console.error("Error fetching pemohon:", error);
+          } 
+        },
+
+        async fetchAccountable() {
+          try {
+            const response = await fetch("/fetch_accountable");
+            if (!response.ok) throw new Error("Gagal mengambil data accountable");
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            this.accountableOptions = data.accountable || "";
+          } catch (error) {
+            console.error("Error fetching accountable:", error);
+          } 
+        },
+
+        async fetchUnit() {
+          try {
+            const response = await fetch("/fetch_unit");
+            if (!response.ok) throw new Error("Gagal mengambil data unit");
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            this.unitOptions = data.unit || "";
+          } catch (error) {
+            console.error("Error fetching unit:", error);
+          }
+        },
+
+        async fetchSatuan() {
+          try {
+            const response = await fetch("/fetch_satuan");
+            if (!response.ok) throw new Error("Gagal mengambil data satuan");
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            this.satuanOptions = data.satuan || "";
+          } catch (error) {
+            console.error("Error fetching satuan:", error);
+          }
+        },
+
         formatPrice(value) {
           if (!value) return "0";
           return Number(value).toLocaleString("id-ID"); // Format angka dengan koma
@@ -512,15 +555,13 @@
 
             if (result.success) {
               this.$emit('submit-success', result.data);
-              this.isSuccess = true;
-              this.openMessageModal('Pengajuan Berhasil Di Submit')
+              this.openMessageModal('Pengajuan Berhasil Di Submit',true)
               this.resetForm();
             } else {
               throw new Error(result.message || 'Terjadi kesalahan');
             }
           } catch (error) {
-            this.isSuccess = false;
-            this.openMessageModal('Pengajuan Gagal')
+            this.openMessageModal('Pengajuan Gagal',false)
 
           } finally {
             this.isLoading = false;
@@ -625,7 +666,8 @@
         closeMessageModal() {
           this.showMessageModal = false
         },
-        openMessageModal(message) {
+        openMessageModal(message,status) {
+          this.isSuccess=status
           this.showMessageModal = true
           this.modalMessage = message
         }

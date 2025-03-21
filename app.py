@@ -32,7 +32,7 @@ class Config:
     UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "/tmp/uploads")
     MAX_CONTENT_LENGTH = 100 * 1024 * 1024
     GOOGLE_CREDENTIALS_PATH = os.getenv("GOOGLE_CREDENTIALS_PATH")
-    GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+    GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID_DEVELOPMENT")
     RECEIPT_API_ENDPOINT = os.getenv("RECEIPT_API_ENDPOINT")
     EVIDENCE_API_ENDPOINT = os.getenv("EVIDENCE_API_ENDPOINT")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -59,6 +59,7 @@ executor = ThreadPoolExecutor(max_workers=3)  # Bisa disesuaikan
 app = Flask(__name__)
 app.config.from_object(config_class)
 app.config.from_object(Config)
+# print(app.config["GOOGLE_SHEET_ID"])
 
 handler = logging.handlers.RotatingFileHandler(
     "app.log", maxBytes=1000000, backupCount=10
@@ -603,22 +604,42 @@ def fetch_id_rencana():
         app.logger.error(f"Error fetching Id Rencana: {str(e)}", exc_info=True)
         return jsonify({"error": "Error fetching Id Rencana"}), 500
 
-@app.route("/fetch_data_perencanaan", methods=["GET"])
-def fetch_data_perencanaan():
+@app.route("/fetch_pemohon", methods=["GET"])
+def fetch_pemohon():
     try:
-        pemohon = query_from_sheet("REQUESTOR",4)[1:] 
-        accountable=query_from_sheet("ACCOUNTABLE",4)[1:] 
-        unit=query_from_sheet("UNIT",1)[1:] 
-        satuan = list(set(query_from_sheet("GENERATEPDFRENCANA", 3)[7:]))
-        return jsonify({
-            "pemohon": pemohon,
-            "accountable": accountable,
-            "unit": unit,
-            "satuan": satuan
-        }), 200
+        pemohon = query_from_sheet("REQUESTOR", 4)[1:]
+        return jsonify({"pemohon": pemohon}), 200
     except Exception as e:
-        app.logger.error(f"Error fetching data perencanaan:{str(e)}",exc_info=True)
-        return jsonify({"error":"Error fetching data Perencanaan"})
+        app.logger.error(f"Error fetching pemohon: {str(e)}", exc_info=True)
+        return jsonify({"error": "Error fetching pemohon"}), 500
+
+@app.route("/fetch_accountable", methods=["GET"])
+def fetch_accountable():
+    try:
+        accountable = query_from_sheet("ACCOUNTABLE", 4)[1:]
+        return jsonify({"accountable": accountable}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching accountable: {str(e)}", exc_info=True)
+        return jsonify({"error": "Error fetching accountable"}), 500
+
+@app.route("/fetch_unit", methods=["GET"])
+def fetch_unit():
+    try:
+        unit = query_from_sheet("UNIT", 1)[1:]
+        return jsonify({"unit": unit}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching unit: {str(e)}", exc_info=True)
+        return jsonify({"error": "Error fetching unit"}), 500
+
+@app.route("/fetch_satuan", methods=["GET"])
+def fetch_satuan():
+    try:
+        satuan = list(set(query_from_sheet("GENERATEPDFRENCANA", 3)[7:]))
+        return jsonify({"satuan": satuan}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching satuan: {str(e)}", exc_info=True)
+        return jsonify({"error": "Error fetching satuan"}), 500
+
 
 @app.route("/fetch_account_skkos", methods=["GET"])
 def fetch_account_skkos():
