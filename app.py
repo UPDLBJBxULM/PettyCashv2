@@ -23,6 +23,8 @@ from PIL import Image
 import io
 import re
 import traceback
+import hashlib
+from cacheManager import CacheManager
 
 load_dotenv(dotenv_path=".env")
 
@@ -51,15 +53,19 @@ class ProductionConfig(Config):
 class DevelopmentConfig(Config):
     DEBUG = True
     SESSION_COOKIE_SECURE = False
+    
 
 env = os.getenv("FLASK_ENV", "production")
 config_class = ProductionConfig if env == "production" else DevelopmentConfig
 executor = ThreadPoolExecutor(max_workers=3)  # Bisa disesuaikan
 
+# cahce manager 
+cm=CacheManager()
+
 app = Flask(__name__)
 app.config.from_object(config_class)
 app.config.from_object(Config)
-# print(app.config["GOOGLE_SHEET_ID"])
+print(app.config["WEBHOOK_URL"])
 
 handler = logging.handlers.RotatingFileHandler(
     "app.log", maxBytes=1000000, backupCount=10
@@ -581,8 +587,6 @@ def append_to_perencanaan(rencana_data, barang_data):
         raise e
 
 
-
-
 @app.route("/fetch_id_rencana", methods=["GET"])
 def fetch_id_rencana():
     try:
@@ -605,8 +609,10 @@ def fetch_id_rencana():
         return jsonify({"error": "Error fetching Id Rencana"}), 500
 
 @app.route("/fetch_pemohon", methods=["GET"])
+@cm.cached("fetch_pemohon")
 def fetch_pemohon():
     try:
+
         pemohon = query_from_sheet("REQUESTOR", 4)[1:]
         return jsonify({"pemohon": pemohon}), 200
     except Exception as e:
@@ -614,6 +620,7 @@ def fetch_pemohon():
         return jsonify({"error": "Error fetching pemohon"}), 500
 
 @app.route("/fetch_accountable", methods=["GET"])
+@cm.cached("fetch_accountable")
 def fetch_accountable():
     try:
         accountable = query_from_sheet("ACCOUNTABLE", 4)[1:]
@@ -623,6 +630,7 @@ def fetch_accountable():
         return jsonify({"error": "Error fetching accountable"}), 500
 
 @app.route("/fetch_unit", methods=["GET"])
+@cm.cached("fetch_unit")
 def fetch_unit():
     try:
         unit = query_from_sheet("UNIT", 1)[1:]
@@ -632,6 +640,7 @@ def fetch_unit():
         return jsonify({"error": "Error fetching unit"}), 500
 
 @app.route("/fetch_satuan", methods=["GET"])
+@cm.cached("fetch_satuan")
 def fetch_satuan():
     try:
         satuan = list(set(query_from_sheet("GENERATEPDFRENCANA", 3)[7:]))

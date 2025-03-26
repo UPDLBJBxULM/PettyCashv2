@@ -342,7 +342,7 @@
 
 
 
-  <script>
+  <!-- <script>
     const { createApp } = Vue;
 
     createApp({
@@ -556,7 +556,7 @@
             if (result.success) {
               this.$emit('submit-success', result.data);
               this.openMessageModal('Pengajuan Berhasil Di Submit',true)
-              this.resetForm();
+              // this.resetForm();
             } else {
               throw new Error(result.message || 'Terjadi kesalahan');
             }
@@ -675,6 +675,12 @@
       delimiters: ["${", "}"]
     }).mount('#app');
 
+  </script> -->
+  <script type="module">
+    import perencanaan from '/static/js/perencanaan.js';
+
+    const app = Vue.createApp(perencanaan);
+    app.mount("#app");
   </script>
 </body>
 
