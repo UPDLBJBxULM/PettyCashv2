@@ -17,11 +17,34 @@
 
 <body class="bg-gray-100" style="overflow-x: hidden; overflow-y: auto;">
   <div id="app">
+    <!-- <div class="" style="position: fixed;">
+      <button class="bg-blue-500 mr-2 ml-5" @click="tab = 'form'">Form</button>
+      <button class="bg-red-500" @click="tab = 'ocr'">OCR</button>
+    </div> -->
+    <div   :class="[
+    'flex justify-center mt-3 mb-3',
+    tab === 'ocr' ? 'absolute top-0 left-0 w-full z-10 mt-3 mb-3' : ''
+  ]">
+      <nav
+          class="flex overflow-x-auto items-center p-1 space-x-1 rtl:space-x-reverse text-sm text-gray-600 bg-gray-500/5 rounded-xl dark:bg-gray-500/20">
+          <button role="tab" type="button"
+              :class="tab=='form'?'flex whitespace-nowrap items-center h-8 px-5 font-medium rounded-lg outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-inset text-cyan-400 shadow bg-white dark:text-white dark:bg-cyan-400':'flex whitespace-nowrap items-center h-8 px-5 font-medium rounded-lg outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-inset hover:text-gray-800 focus:text-cyan-400 dark:text-gray-400 dark:hover:text-gray-400 dark:focus:text-gray-400'"
+              aria-selected="" @click="tab = 'form'">
+              Perencanaan
+          </button>
+  
+          <button role="tab" type="button"
+              :class="tab=='ocr'?'flex whitespace-nowrap items-center h-8 px-5 font-medium rounded-lg outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-inset text-cyan-400 shadow bg-white dark:text-white dark:bg-cyan-400':'flex whitespace-nowrap items-center h-8 px-5 font-medium rounded-lg outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-inset hover:text-gray-800 focus:text-cyan-400 dark:text-gray-400 dark:hover:text-gray-400 dark:focus:text-gray-400'"
+              aria-selected="" @click="tab = 'ocr'">
+              OCR
+          </button>
+      </nav>
+  </div>
     <div v-if="loadingFetchData" id="splashScreen" class="splash-screen">
       <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Petty Easy Logo" class="splash-logo" />
     </div>
     <!-- Hapus bagian kamera dan tambahkan form -->
-    <div class="container mx-auto p-6 max-w-6xl" style="background-color:transparent ;">
+    <div v-if="tab === 'form'" class="container mx-auto p-6 max-w-6xl" style="background-color:transparent ;">
 
       <h1 class="text-2xl font-bold mb-6">Form Pengajuan PettyCash</h1>
       <!-- <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -144,8 +167,11 @@
                 </span>
               </span>
             </label>
-            <textarea v-model="form.perihal" class="w-full text-sm sm:text-base border rounded-lg p-2"
-              required></textarea>
+            <input v-model="form.perihal" class="w-full text-sm sm:text-base border rounded-lg p-2" list="perihal-list" type="text"
+              required>
+              <datalist id="perihal-list">
+                <option v-for="p in perihalOptions" :key="p" :value="p"></option>
+              </datalist>
             <div v-if="error.perihal" class="text-red-500 text-sm mt-1">
               ${ error.perihal }
             </div>
@@ -184,7 +210,10 @@
                 </span>
               </span>
               <input type="text" v-model="barang.nama" placeholder="Nama *"
-                class="w-full text-sm sm:text-base border rounded-lg p-2" required>
+                class="w-full text-sm sm:text-base border rounded-lg p-2" list="nama-barang-list" required>
+                <datalist id="nama-barang-list">
+                  <option v-for="nb in namaBarangOptions" :key="nb" :value="nb"></option>
+                </datalist>
               <div v-if="error.daftarBarang[index]?.nama" class="text-red-500 text-sm">
                 ${ error.daftarBarang[index].nama }
               </div>
@@ -305,6 +334,9 @@
         </button>
       </div>
     </div>
+    <div v-if="tab === 'ocr'">
+      <iframe src="/ocr" style="width:100%; height:100vh; border:none;"></iframe>
+    </div>
     <!-- Modal Pemrosesan -->
     <div v-if="isLoading" id="processingModal"
       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true"
@@ -348,6 +380,7 @@
     createApp({
       data() {
         return {
+          tab: 'form',
           isLoading: false,
           showMessageModal: false,
           modalMessage: '',
@@ -388,6 +421,8 @@
           accountableOptions: [],
           unitOptions: [],
           satuanOptions: [],
+          namaBarangOptions: [],
+          perihalOptions: [],
           currencyOptions: ['IDR', 'USD'],
         }
       },
@@ -410,10 +445,12 @@
               this.fetchAccountable(),
               this.fetchUnit(),
               this.fetchSatuan(),
+              this.fetchNamaBarang(),
+              this.fetchPerihal()
             ]);
           } catch (error) {
             console.error("Error fetching data:", error);
-            this.openMessageModal("data Gagal Dimuat",false)
+            this.openMessageModal("data Gagal Dimuat", false)
           } finally {
             this.loadingFetchData = false;
           }
@@ -427,7 +464,7 @@
             this.pemohonOptions = data.pemohon || "";
           } catch (error) {
             console.error("Error fetching pemohon:", error);
-          } 
+          }
         },
 
         async fetchAccountable() {
@@ -439,7 +476,7 @@
             this.accountableOptions = data.accountable || "";
           } catch (error) {
             console.error("Error fetching accountable:", error);
-          } 
+          }
         },
 
         async fetchUnit() {
@@ -463,6 +500,28 @@
             this.satuanOptions = data.satuan || "";
           } catch (error) {
             console.error("Error fetching satuan:", error);
+          }
+        },
+        async fetchNamaBarang() {
+          try {
+            const response = await fetch("/fetch_nama_barang");
+            if (!response.ok) throw new Error("Gagal mengambil data nama barang");
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            this.namaBarangOptions = data.nama_barang || "";
+          } catch (error) {
+            console.error("Error fetching nama barang:", error);
+          }
+        },
+        async fetchPerihal() {
+          try {
+            const response = await fetch("/fetch_perihal");
+            if (!response.ok) throw new Error("Gagal mengambil data perihal");
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            this.perihalOptions = data.perihal || "";
+          } catch (error) {
+            console.error("Error fetching perihal:", error);
           }
         },
 
@@ -555,13 +614,13 @@
 
             if (result.success) {
               this.$emit('submit-success', result.data);
-              this.openMessageModal('Pengajuan Berhasil Di Submit',true)
+              this.openMessageModal('Pengajuan Berhasil Di Submit', true)
               this.resetForm();
             } else {
               throw new Error(result.message || 'Terjadi kesalahan');
             }
           } catch (error) {
-            this.openMessageModal('Pengajuan Gagal',false)
+            this.openMessageModal('Pengajuan Gagal', false)
 
           } finally {
             this.isLoading = false;
@@ -666,8 +725,8 @@
         closeMessageModal() {
           this.showMessageModal = false
         },
-        openMessageModal(message,status) {
-          this.isSuccess=status
+        openMessageModal(message, status) {
+          this.isSuccess = status
           this.showMessageModal = true
           this.modalMessage = message
         }

@@ -246,10 +246,14 @@ def fetch_uraian_laporan_suggestions():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
-@app.route("/perencanaan")
-def perencanaan():
+    # return render_template("index.html")
     return render_template("perencanaan.html")
+
+@app.route("/ocr")
+def perencanaan():
+    return render_template("index.html")
+
+    # return render_template("perencanaan.html")
 
 @app.route("/fetch_judul_laporan_suggestions", methods=["GET"])
 def fetch_judul_laporan_suggestions_api():
@@ -631,6 +635,16 @@ def fetch_unit():
         app.logger.error(f"Error fetching unit: {str(e)}", exc_info=True)
         return jsonify({"error": "Error fetching unit"}), 500
 
+    
+@app.route("/fetch_perihal", methods=["GET"])
+def fetch_perihal():
+    try:
+        perihal = list(set(query_from_sheet("RENCANA", 6)[2:]))
+        return jsonify({"perihal": perihal}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching perihal: {str(e)}", exc_info=True)
+        return jsonify({"error": "Error fetching perihal"}), 500
+
 @app.route("/fetch_satuan", methods=["GET"])
 def fetch_satuan():
     try:
@@ -640,6 +654,14 @@ def fetch_satuan():
         app.logger.error(f"Error fetching satuan: {str(e)}", exc_info=True)
         return jsonify({"error": "Error fetching satuan"}), 500
 
+@app.route("/fetch_nama_barang", methods=["GET"])
+def fetch_nama_barang():
+    try:
+        nama_barang = list(set(query_from_sheet("GENERATEPDFRENCANA", 2)[7:]))
+        return jsonify({"nama_barang": nama_barang}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching nama barang: {str(e)}", exc_info=True)
+        return jsonify({"error": "Error fetching nama barang"}), 500
 
 @app.route("/fetch_account_skkos", methods=["GET"])
 def fetch_account_skkos():
