@@ -517,65 +517,56 @@ def append_to_perencanaan(rencana_data, barang_data):
     try:
         client = init_gspread_client()
         gmt8 = pytz.timezone("Asia/Singapore")
-        # Waktu saat ini
-
         current_datetime = datetime.now(gmt8)
         current_time = current_datetime.strftime("%d/%m/%Y %H:%M:%S")
         
-        # ================= PERHITUNGAN TANGGAL =================
-        # Start Date: 7 hari setelah tanggal sekarang
+        # Perhitungan tanggal
         start_date = current_datetime + timedelta(days=7)
-        
-        # End Date: 5 hari kerja setelah start date (lewati Sabtu-Minggu)
         end_date = add_business_days(start_date, 4)
         
-        # Format tanggal
-        formatted_start_date = start_date.strftime("%d/%m/%Y")
-        formatted_end_date = end_date.strftime("%d/%m/%Y")
+        # Format tanggal yang lebih compatible dengan Google Sheets
+        formatted_start_date = start_date.strftime("%Y-%m-%d")
+        formatted_end_date = end_date.strftime("%Y-%m-%d")
 
-        # ================= SHEET RENCANA =================
+        # Sheet RENCANA
         sheet_rencana = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet("RENCANA")
         
-        # Generate ID Rencana (Timestamp Unix)
         nip_for_id = rencana_data["accountable"].split("_")[1]
         id_rencana = f"{nip_for_id}{int(datetime.now(gmt8).timestamp())}"
         
-        # Format data untuk sheet rencana
         rencana_row = [
             current_time,               # Timestamp submit
-            formatted_start_date,       # Start Date
-            formatted_end_date,         # End Date
-            rencana_data["pemohon"],    # Pemohon
-            rencana_data["accountable"],# Accountable
-            rencana_data["perihal"],    # Perihal
-            rencana_data["noHp"],       # No HP
-            rencana_data["unit"],       # Unit
-            rencana_data["total"],      # Total
-            id_rencana                  # ID Rencana
+            formatted_start_date,        # Start Date (format YYYY-MM-DD)
+            formatted_end_date,          # End Date (format YYYY-MM-DD)
+            rencana_data["pemohon"],
+            rencana_data["accountable"],
+            rencana_data["perihal"],
+            rencana_data["noHp"],
+            rencana_data["unit"],
+            rencana_data["total"],
+            id_rencana
         ]
         
-        # Tambahkan ke sheet rencana
-        sheet_rencana.append_row(rencana_row,table_range="A1")
+        # Gunakan USER_ENTERED untuk interpretasi nilai yang benar
+        sheet_rencana.append_row(rencana_row, value_input_option='USER_ENTERED', table_range="A1")
         
-        # ================= SHEET GENERETEPDFRENCANA =================
+        # Sheet GENERATEPDFRENCANA
         sheet_pdf = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet("GENERATEPDFRENCANA")
         
-        # Format data barang
         pdf_rows = []
         for barang in barang_data:
             pdf_row = [
-                id_rencana,            # id_rencana
-                barang["nama"],        # nama_barang
-                barang["satuan"],      # satuan
-                barang["harga"],       # harga
-                barang["jumlah"],      # jumlah
-                barang["total"]        # total
+                id_rencana,
+                barang["nama"],
+                barang["satuan"],
+                barang["harga"],
+                barang["jumlah"],
+                barang["total"]
             ]
             pdf_rows.append(pdf_row)
         
-        # Tambahkan semua barang sekaligus
         if pdf_rows:
-            sheet_pdf.append_rows(pdf_rows)
+            sheet_pdf.append_rows(pdf_rows, value_input_option='USER_ENTERED')
             
         return id_rencana
         
@@ -586,13 +577,14 @@ def append_to_perencanaan(rencana_data, barang_data):
 
 
 
-
 @app.route("/fetch_id_rencana", methods=["GET"])
 def fetch_id_rencana():
     try:
         client = init_gspread_client()
         sheet = client.open_by_key(app.config["GOOGLE_SHEET_ID"]).worksheet("RENCANA")
-        records = sheet.get_all_records()
+        expected_headers = ['Timestamp', 'start date A/R', 'end date A/R', 'Pemohon', 'Accountable', 'Perihal',
+                    'No HP Pemohon', 'Unit', 'Nominal', 'id rencana', 'status', 'status permohonan', 'Detail']
+        records = sheet.get_all_records(expected_headers=expected_headers)
         id_rencana_data = []
         for record in records:
             id_value = record.get("id rencana", "")
@@ -648,7 +640,7 @@ def fetch_perihal():
 @app.route("/fetch_satuan", methods=["GET"])
 def fetch_satuan():
     try:
-        satuan = list(set(query_from_sheet("GENERATEPDFRENCANA", 3)[7:]))
+        satuan = list(set(query_from_sheet("GENERATEPDFRENCANA", 3)[6:]))
         return jsonify({"satuan": satuan}), 200
     except Exception as e:
         app.logger.error(f"Error fetching satuan: {str(e)}", exc_info=True)
@@ -657,7 +649,7 @@ def fetch_satuan():
 @app.route("/fetch_nama_barang", methods=["GET"])
 def fetch_nama_barang():
     try:
-        nama_barang = list(set(query_from_sheet("GENERATEPDFRENCANA", 2)[7:]))
+        nama_barang = list(set(query_from_sheet("GENERATEPDFRENCANA", 2)[6:]))
         return jsonify({"nama_barang": nama_barang}), 200
     except Exception as e:
         app.logger.error(f"Error fetching nama barang: {str(e)}", exc_info=True)
