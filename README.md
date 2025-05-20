@@ -1,5 +1,38 @@
 ## Dokumentasi Lengkap Aplikasi PettyCash v2 - Nota Belanja dengan Gemini API
 
+### 🔄 Pembaruan Terbaru
+
+#### ✅ Penambahan Halaman Perencanaan
+
+Aplikasi kini mendukung **pengajuan perencanaan belanja petty cash** melalui halaman baru yang dapat diakses di tab "Perencanaan". Fitur ini melengkapi proses pelaporan dengan menambahkan kemampuan untuk melakukan *perencanaan kebutuhan* barang sebelum belanja dilakukan.
+
+#### Fitur Halaman Perencanaan (`perencanaan.html`):
+
+- 📋 **Form Input Dinamis**:
+  - **Pemohon, Accountable, Unit**: Dropdown dinamis dari Google Sheets.
+  - **Perihal**: Input dengan *datalist* (autocomplete) dari data sebelumnya.
+  - **Daftar Barang**:
+    - Input nama barang, satuan, harga satuan, jumlah, dan total (dihitung otomatis).
+    - Mendukung banyak item barang.
+    - Currency: IDR atau USD (otomatis dikonversi).
+- 📄 **Validasi Data**:
+  - Validasi lengkap untuk semua field wajib termasuk format numerik.
+  - Validasi real-time dan per barang.
+- 🔁 **Integrasi Google Sheets**:
+  - Menyimpan data rencana ke sheet `RENCANA`.
+  - Menyimpan daftar barang ke sheet `GENERATEPDFRENCANA`.
+- 🌐 **API Baru di Backend** (`app.py`):
+  - `POST /submit/perencanaan`: Menyimpan data pengajuan ke Google Sheets.
+  - `GET /fetch_pemohon`, `fetch_accountable`, `fetch_unit`, `fetch_perihal`, `fetch_satuan`, `fetch_nama_barang`: Mengambil data untuk dropdown frontend.
+
+#### Navigasi Aplikasi:
+
+- Halaman utama (`/`) sekarang menampilkan tab:
+  - **Perencanaan**: Untuk pengajuan awal belanja.
+  - **Pelaporan**: Untuk input bukti belanja menggunakan OCR.
+
+---
+
 ### 1. Pendahuluan
 
 Aplikasi PettyCash v2 - Nota Belanja ini adalah aplikasi web yang dirancang untuk **memudahkan proses pelaporan dan rekapitulasi keuangan** dengan cara otomatis mengekstrak **Nilai Total belanja dari struk nota** menggunakan teknologi **Optical Character Recognition (OCR)**. Aplikasi ini telah ditingkatkan dengan integrasi **Google Gemini API**, sebuah model bahasa besar (LLM) canggih, untuk menggantikan sistem OCR sebelumnya yang berbasis YOLOv11 dan Tesseract.
